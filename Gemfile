@@ -1,4 +1,6 @@
 source "https://rubygems.org"
-ruby "2.0.0"
+
+# For now, couldn't install 2.0.0 locally.
+ruby "1.9.3"
 
 gem "sinatra"
