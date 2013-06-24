@@ -5,8 +5,8 @@ require "json"
 Bundler.require :default, (ENV['RACK_ENV'] || "development").to_sym
 
 get "/" do
-  "Hello at #{Time.now}"
   logger.info "got /"
+  "Hello at #{Time.now}"
 end
 
 post "/" do
