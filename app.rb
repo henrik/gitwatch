@@ -15,6 +15,8 @@ post "/" do
   # TODO: What are all these for? Will we get duplicates?
   commits = push["commits"] | [push["head_commit"]]
 
+  logger.info "----------------------------"
+
   commits.each do |commit|
     touched_paths = commit["modified"] | commit["removed"] | commit["added"]
 
