@@ -1,1 +1,4 @@
 # gitwatch
+
+## TODO
+* auth?

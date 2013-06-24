@@ -6,9 +6,10 @@ Bundler.require :default, (ENV['RACK_ENV'] || "development").to_sym
 
 get "/" do
   "Hello at #{Time.now}"
+  logger.info "got /"
 end
 
 post "/" do
   push = JSON.parse(params[:payload])
-  logger.debug "I got some JSON: #{push.inspect}"
+  logger.info "I got some JSON: #{push.inspect}"
 end
