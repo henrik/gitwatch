@@ -16,6 +16,7 @@ Current status: spike. Use at your own peril.
 * don't notify about yourself
 * group by push batch, not by individual commit
 * notify by email?
+* pick up config from a file in the repo if possible
 * split up
 * doc
 * spec
