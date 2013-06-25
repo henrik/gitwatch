@@ -16,7 +16,7 @@ class HipChatNotifier
     end
 
     client = HipChat::Client.new(@api_token)
-    client[@room_id].send("gitwatch", message)
+    client[@room_id].send("gitwatch", message, message_format: "text")
   end
 end
 
@@ -42,28 +42,23 @@ post "/" do
   # TODO: What are all these for? Will we get duplicates?
   commits = push["commits"] | [push["head_commit"]]
 
-  log "----------------------------"
-
   commits.each do |commit|
     touched_paths = commit["modified"] | commit["removed"] | commit["added"]
     commit_url = commit["url"]
 
-    log "URL: #{commit_url.inspect}"
-    log "Paths: #{touched_paths.inspect}"
-
     paths = touched_paths.select { |path| path.include?(".css") }
     if paths.any?
-      log "!! CSS gatekeeper: #{commit_url} touched #{paths.inspect}"
+      notify "!! CSS gatekeeper: #{commit_url} touched #{paths.inspect}"
     end
 
     paths = touched_paths.select { |path| path.include?("spec_helper") || path.include?("spec/support") }
     if paths.any?
-      log "!! Spec setup nerd: #{commit_url} touched #{paths.inspect}"
+      notify "!! Spec setup nerd: #{commit_url} touched #{paths.inspect}"
     end
 
     paths = touched_paths.select { |path| path.include?("bovary") }
     if paths.any?
-      log "!! Bovarian: #{commit_url} touched #{paths.inspect}"
+      notify "!! Bovarian: #{commit_url} touched #{paths.inspect}"
     end
   end
 
@@ -71,7 +66,7 @@ post "/" do
 end
 
 helpers do
-  def log(message)
+  def notify(message)
     $notifiers.each do |notifier|
       notifier.notify(self, message)
     end
