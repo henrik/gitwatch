@@ -49,8 +49,7 @@ $guards << Guard.new("CSS gatekeeper", %w[henrik]) { |path| path.include?(".css"
 $guards << Guard.new("Spec nerd", %w[jocke]) { |path| path.include?("spec_helper") || path.include?("spec/support") || path.include?("unit/support") }
 
 get "/" do
-  logger.info "got /"
-  "Hello at #{Time.now}"
+  "Hello!"
 end
 
 post "/" do
