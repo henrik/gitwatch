@@ -26,10 +26,27 @@ class LogNotifier
   end
 end
 
-$notifiers = [
-  LogNotifier.new,
-  HipChatNotifier.new(ENV['HIPCHAT_TOKEN'], ENV['HIPCHAT_ROOM_ID'])
-]
+class Guard
+  def initialize(group, nicks, &matcher)
+    @group = group
+    @nicks = nicks
+    @matcher = matcher
+  end
+
+  def matching_paths(paths)
+    paths.select(&@matcher)
+  end
+
+  attr_reader :group, :nicks
+end
+
+$notifiers = []
+$notifiers << LogNotifier.new
+$notifiers << HipChatNotifier.new(ENV['HIPCHAT_TOKEN'], ENV['HIPCHAT_ROOM_ID'])
+
+$guards = []
+$guards << Guard.new("CSS gatekeeper", %w[henrik]) { |path| path.include?(".css") }
+$guards << Guard.new("Spec nerd", %w[jocke]) { |path| path.include?("spec_helper") || path.include?("spec/support") || path.include?("unit/support") }
 
 get "/" do
   logger.info "got /"
@@ -46,19 +63,12 @@ post "/" do
     touched_paths = commit["modified"] | commit["removed"] | commit["added"]
     commit_url = commit["url"]
 
-    paths = touched_paths.select { |path| path.include?(".css") }
-    if paths.any?
-      notify "!! CSS gatekeeper: #{commit_url} touched #{paths.inspect}"
-    end
-
-    paths = touched_paths.select { |path| path.include?("spec_helper") || path.include?("spec/support") }
-    if paths.any?
-      notify "!! Spec setup nerd: #{commit_url} touched #{paths.inspect}"
-    end
-
-    paths = touched_paths.select { |path| path.include?("bovary") }
-    if paths.any?
-      notify "!! Bovarian: #{commit_url} touched #{paths.inspect}"
+    $guards.each do |guard|
+      paths = guard.matching_paths(touched_paths)
+      if paths.any?
+        mentions = guard.nicks.map { |x| "@#{x}" }.join(", ")
+        notify "#{guard.group} (#{mentions}): #{commit_url} touched #{paths.join(", ")}"
+      end
     end
   end
 
