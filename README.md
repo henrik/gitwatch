@@ -14,6 +14,7 @@ Current status: spike. Use at your own peril.
 * auth?
 * conditions on author
 * don't notify about yourself
+* group by push batch, not by individual commit
 * notify by email?
 * split up
 * doc
