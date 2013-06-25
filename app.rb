@@ -15,7 +15,7 @@ class HipChatNotifier
       return
     end
 
-    HipChat::Client.new(@api_token)
+    client = HipChat::Client.new(@api_token)
     client[@room_id].send("gitwatch", message)
   end
 end
