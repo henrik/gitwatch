@@ -46,7 +46,7 @@ $notifiers << HipChatNotifier.new(ENV['HIPCHAT_TOKEN'], ENV['HIPCHAT_ROOM_ID'])
 
 $guards = []
 $guards << Guard.new("CSS gatekeeper", %w[henrik]) { |path| path.include?(".css") }
-$guards << Guard.new("Spec nerd", %w[jocke]) { |path| path.include?("spec_helper") || path.include?("spec/support") || path.include?("unit/support") }
+$guards << Guard.new("Spec nerd", %w[jocke]) { |path| path.include?("spec_helper") }
 
 get "/" do
   "Hello!"
