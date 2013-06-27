@@ -27,9 +27,9 @@ class LogNotifier
 end
 
 class Guard
-  def initialize(group, nicks, &matcher)
-    @group = group
-    @nicks = nicks
+  def initialize(group_name, people, &matcher)
+    @group_name = group_name
+    @people = people
     @matcher = matcher
   end
 
@@ -37,16 +37,41 @@ class Guard
     paths.select(&@matcher)
   end
 
-  attr_reader :group, :nicks
+  attr_reader :group_name, :people
+end
+
+class Person < Struct.new(:email, :chat_name)
+  @all = []
+
+  def self.all
+    @all
+  end
+
+  def self.register(email, chat_name)
+    person = Person.new(email, chat_name)
+    all << person
+    person
+  end
+
+  def self.find_by_email(email)
+    all.find { |person| person.email == email }
+  end
+
+  def at_mention
+    "@#{chat_name}"
+  end
 end
 
 $notifiers = []
 $notifiers << LogNotifier.new
 $notifiers << HipChatNotifier.new(ENV['HIPCHAT_TOKEN'], ENV['HIPCHAT_ROOM_ID'])
 
+henrik = Person.register("henrik@nyh.se", "henrik")
+jocke  = Person.register("joakim.kolsjo@gmail.com", "jocke")
+
 $guards = []
-$guards << Guard.new("CSS gatekeeper", %w[henrik]) { |path| path.include?(".css") }
-$guards << Guard.new("Spec nerd", %w[jocke]) { |path| path.include?("spec_helper") }
+$guards << Guard.new("CSS gatekeeper", [henrik]) { |path| path.include?(".css") }
+$guards << Guard.new("Spec nerd", [jocke]) { |path| path.include?("spec_helper") }
 
 get "/" do
   "Hello!"
@@ -62,11 +87,17 @@ post "/" do
     touched_paths = commit["modified"] | commit["removed"] | commit["added"]
     commit_url = commit["url"]
 
+    emails = [ commit["author"]["email"], commit["committer"]["email"] ].compact.uniq
+    touchers = emails.map { |email| Person.find_by_email(email) }
+
     $guards.each do |guard|
       paths = guard.matching_paths(touched_paths)
-      if paths.any?
-        mentions = guard.nicks.map { |x| "@#{x}" }.join(", ")
-        notify "#{guard.group} (#{mentions}): #{commit_url} touched #{paths.join(", ")}"
+      people = guard.people - touchers
+      group_name = guard.group_name
+
+      if paths.any? && people.any?
+        mentions = people.map { |x| x.at_mention }
+        notify "#{group_name} (#{list mentions}): #{commit_url} touched #{list paths}"
       end
     end
   end
@@ -79,5 +110,9 @@ helpers do
     $notifiers.each do |notifier|
       notifier.notify(self, message)
     end
+  end
+
+  def list(x)
+    x.join(", ")
   end
 end
