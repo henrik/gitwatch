@@ -1,70 +1,16 @@
 require "bundler"
-require "json"
-
 Bundler.require :default, (ENV['RACK_ENV'] || "development").to_sym
 
-class HipChatNotifier
-  def initialize(api_token, room_id)
-    @api_token = api_token
-    @room_id = room_id
-  end
+require "json"
 
-  def notify(context, message)
-    unless @api_token
-      context.logger.info "No HipChat token!"
-      return
-    end
-
-    client = HipChat::Client.new(@api_token)
-    client[@room_id].send("gitwatch", message, message_format: "text")
-  end
-end
-
-class LogNotifier
-  def notify(context, message)
-    context.logger.info message
-  end
-end
-
-class Guard
-  def initialize(group_name, people, &matcher)
-    @group_name = group_name
-    @people = people
-    @matcher = matcher
-  end
-
-  def matching_paths(paths)
-    paths.select(&@matcher)
-  end
-
-  attr_reader :group_name, :people
-end
-
-class Person < Struct.new(:email, :chat_name)
-  @all = []
-
-  def self.all
-    @all
-  end
-
-  def self.register(email, chat_name)
-    person = Person.new(email, chat_name)
-    all << person
-    person
-  end
-
-  def self.find_by_email(email)
-    all.find { |person| person.email == email }
-  end
-
-  def at_mention
-    "@#{chat_name}"
-  end
-end
+require_relative "models/person"
+require_relative "models/guard"
+require_relative "notifiers/hipchat"
+require_relative "notifiers/log"
 
 $notifiers = []
 $notifiers << LogNotifier.new
-$notifiers << HipChatNotifier.new(ENV['HIPCHAT_TOKEN'], ENV['HIPCHAT_ROOM_ID'])
+$notifiers << HipChatNotifier.new(ENV['HIPCHAT_TOKEN'], ENV['HIPCHAT_ROOM_ID']) if ENV['HIPCHAT_TOKEN']
 
 henrik = Person.register("henrik@nyh.se", "henrik")
 jocke  = Person.register("joakim.kolsjo@gmail.com", "jocke")
